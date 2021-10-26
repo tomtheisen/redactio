@@ -1,14 +1,71 @@
-function h (tag: Function | string, attrs?: {[key: string]: any}, ...children: (HTMLElement | string)[]): HTMLElement {
-    if (typeof tag === 'function') throw 'function tags not supported';
+type ElementRefs = {[key: string]: HTMLElement | SimpleComponent};
+type RenderOutput = { element: HTMLElement, refs: ElementRefs };
 
-    let result = document.createElement(tag);
-    for (let attr in attrs) result.setAttribute(attr, attrs[attr]);
-    result.append(...children);
-    return result;
+function createSimple(
+    tag: (new () => SimpleComponent) | string, 
+    attrs?: {[key: string]: any}, 
+    ...children: (RenderOutput | HTMLElement | string)[]
+): RenderOutput {
+    let refs = {}, element: HTMLElement, component: SimpleComponent | undefined; 
+    if (typeof tag === 'function'){
+        component = new tag();
+        element = component.element;
+    }
+    else {
+        element = document.createElement(tag);
+    }
+
+    for (let child of children) {
+        if (typeof child === "string" || child instanceof HTMLElement) {
+            element.append(child);
+        }
+        else if (typeof child === "object") {
+            Object.assign(refs, child.refs);
+            element.append(child.element);
+        }
+    }
+
+    for (let attr in attrs) {
+        if (attr === "ref") {
+            refs[attrs[attr]] = component ?? element;
+        } 
+        else {
+            element.setAttribute(attr, attrs[attr]);
+        }
+    }
+    return { element, refs };
 }
 
-interface SimpleComponent {
+abstract class SimpleComponent {
     readonly element: HTMLElement;
+    readonly refs: ElementRefs;
+
+    constructor(arg: RenderOutput) {
+        this.element = arg.element;
+        this.refs = arg.refs;
+    }
+
+    get hidden() {
+        return this.element.hidden;
+    }
+    set hidden(value: boolean) {
+        this.element.hidden = value;
+    }
+
+    get innerText() {
+        return this.element.innerText;
+    }
+    set innerText(value: string) {
+        this.element.innerText = value;
+    }
+
+    get classList() {
+        return this.element.classList;
+    }
+
+    addEventListener(name: string, handler: (ev: Event) => void) {
+        this.element.addEventListener(name, handler);
+    }
 }
 
 interface Arrayish<T> {
@@ -21,75 +78,13 @@ interface Arrayish<T> {
     set(i: number, value: T): void;
 }
 
-interface ITodoItem {
-    name: string;
-    done: boolean;
-}
-
-interface ITodoList {
-    readonly items: Arrayish<ITodoItem>;
-}
-
-class TodoItem implements ITodoItem, SimpleComponent {
-    readonly element: HTMLElement;
-    private nameSpan: HTMLElement;
-    private nameInput: HTMLInputElement;
-
-    constructor(name: string, done = false) {
-        let finishButton, editButton;
-        this.element = <li>
-            {this.nameSpan = <span />}
-            {this.nameInput = <input hidden />}
-            {editButton = <button>edit</button>}            
-            {finishButton = <button>finish</button>}
-        </li>;
-
-        this.name = name;
-        this.done = done;
-
-        finishButton.addEventListener("click", ev => {
-            this.done = true;
-            finishButton.hidden = true;
-        });
-        editButton.addEventListener("click", ev => {
-            if (!this.isEditing()) {
-                this.nameInput.value = this.nameSpan.textContent ?? '';
-                this.setEditing(true);
-            }
-            else {
-                this.nameSpan.textContent = this.nameInput.value;
-                this.setEditing(false);
-            }
-        });
-    }
-
-    isEditing(): boolean {
-        return this.nameSpan.hidden;
-    }
-
-    setEditing(state: boolean) {
-        this.nameSpan.hidden = state;
-        this.nameInput.hidden = !state;
-    }
-
-    get name() {
-        return this.nameSpan.innerText;
-    }
-    set name(value: string) {
-        this.nameSpan.innerText = value;
-    }
-
-    get done() {
-        return this.element.classList.contains("done");
-    }
-    set done(value: boolean) {
-        this.element.classList.toggle("done", value);
-    }
-}
-
-class DomArray<T extends SimpleComponent> implements Arrayish<T>, SimpleComponent {
-    readonly element = <ul />;
+class DomArray<T extends SimpleComponent> extends SimpleComponent implements Arrayish<T> {
+    // todo: make the dom the truth
     private items: T[] = [];
+    constructor() {
+        super(<ul />);
+    }
+
     get length() {
         return this.items.length;
     }
@@ -114,23 +109,93 @@ class DomArray<T extends SimpleComponent> implements Arrayish<T>, SimpleComponen
     }
 }
 
-class TodoList implements ITodoList, SimpleComponent {
-    readonly element: HTMLElement;;
-    readonly items = new DomArray<TodoItem>();
-    private nameInput = <input />;
-    private addButton = <button>Add</button>;
+/* App code */
+
+interface ITodoItem {
+    name: string;
+    done: boolean;
+}
+
+interface ITodoList {
+    readonly items: Arrayish<ITodoItem>;
+}
+
+class TodoItem extends SimpleComponent implements ITodoItem {
+    constructor(name: string, done = false) {
+        super(<li>
+            <span ref="nameSpan">{name}</span>
+            <input hidden ref="nameInput" />
+            <button ref="edit">edit</button>         
+            <button ref="finish">finish</button>
+        </li>);
+
+        this.done = done;
+
+        this.refs.finish.addEventListener("click", ev => this.finish());
+        this.refs.edit.addEventListener("click", ev => this.edit());
+    }
+
+    finish() {
+        this.done = true;
+        this.refs.finish.hidden = true;
+    }
+
+    edit() {
+        const nameInput = this.refs.nameInput as HTMLInputElement;
+        if (!this.editing) {
+            nameInput.value = this.refs.nameSpan.innerText ?? '';
+            this.editing = true;
+        }
+        else {
+            this.refs.nameSpan.innerText = nameInput.value;
+            this.editing = false;
+        }
+    }
+
+    get editing() {
+        return this.refs.nameSpan.hidden;
+    }
+    set editing(state: boolean) {
+        this.refs.nameSpan.hidden = state;
+        this.refs.nameInput.hidden = !state;
+    }
+
+    get name() {
+        return this.refs.nameSpan.innerText;
+    }
+    set name(value: string) {
+        this.refs.nameSpan.innerText = value;
+    }
+
+    get done() {
+        return this.classList.contains("done");
+    }
+    set done(value: boolean) {
+        this.classList.toggle("done", value);
+    }
+}
+
+class TodoList extends SimpleComponent implements ITodoList {
+    readonly items: DomArray<TodoItem>;
 
     constructor() {
-        this.element = <div>{this.items.element}{this.nameInput}{this.addButton}</div>;
+        super(<div>
+            <DomArray ref="items" />
+            <input ref="name" />
+            <button ref="add">Add</button>
+        </div>);
 
-        this.addButton.addEventListener("click", ev => {
-            let item = new TodoItem(this.nameInput.value);
-            this.nameInput.value = "";
+        this.items = this.refs.items as any;
+
+        this.refs.add.addEventListener("click", ev => {
+            let nameInput = this.refs.name as HTMLInputElement;
+            let item = new TodoItem(nameInput.value);
+            nameInput.value = "";
             this.items.push(item);
         });
     }
 }
 
 var app = new TodoList;
-document.querySelector("#app")?.append(app.element);
-
+const appDiv = document.getElementById("app")!;
+appDiv.append(app.element);
