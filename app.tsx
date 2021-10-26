@@ -1,3 +1,23 @@
+namespace JSX {
+    interface StandardElement {
+        ref?: string;
+        class?: string;
+        onclick?: (ev: Event) => void;
+        hidden?: boolean;
+    }
+    export interface IntrinsicElements {
+        ul: StandardElement;
+        li: StandardElement;
+        span: StandardElement;
+        button: StandardElement;
+        input: StandardElement;
+        div: StandardElement;
+        h1: StandardElement;
+        h2: StandardElement;
+        pre: StandardElement;
+    }
+}
+
 type ElementRefs = {[key: string]: HTMLElement | SimpleComponent};
 type RenderOutput = { element: HTMLElement, refs: ElementRefs };
 
@@ -27,10 +47,15 @@ function createSimple(
 
     for (let attr in attrs) {
         if (attr === "ref") {
-            refs[attrs[attr]] = component ?? element;
+            (refs as any)[attrs[attr]] = component ?? element;
         } 
         else {
-            element.setAttribute(attr, attrs[attr]);
+            if (attr in element) {
+                (element as any)[attr] = attrs[attr];
+            }
+            else {
+                element.setAttribute(attr, attrs[attr]);
+            }
         }
     }
     return { element, refs };
@@ -68,11 +93,12 @@ abstract class SimpleComponent {
     }
 }
 
-interface Arrayish<T> {
+interface Arrayish<T> extends Iterable<T> {
     readonly length: number;
     push(t: T): void;
     removeAt(i: number): void;
     insertAt(i: number, value: T): void;
+    map<U>(project: (t: T, i: number, arr: Arrayish<T>) => U): U[];
 
     get(i: number): T;
     set(i: number, value: T): void;
@@ -84,6 +110,12 @@ class DomArray<T extends SimpleComponent> extends SimpleComponent implements Arr
     constructor() {
         super(<ul />);
     }
+    
+    *[Symbol.iterator](): Iterator<T> {
+        for (let i = 0; i < this.length; i++) {
+            yield this.get(i);
+        }
+    }
 
     get length() {
         return this.items.length;
@@ -92,9 +124,10 @@ class DomArray<T extends SimpleComponent> extends SimpleComponent implements Arr
         this.items.push(t);
         this.element.appendChild(t.element);
     }
-    removeAt(i: number): void {
-        this.items.splice(i, 1);
+    removeAt(i: number): T {
+        let removed = this.items.splice(i, 1);
         this.element.removeChild(this.element.children[i]);
+        return removed[0];
     }
     insertAt(i: number, value: T): void {
         this.items.splice(i, 0, value);
@@ -107,6 +140,14 @@ class DomArray<T extends SimpleComponent> extends SimpleComponent implements Arr
         this.items[i] = value;
         this.element.children[i].replaceWith(value.element);
     }
+
+    map<U>(project: (t: T, idx: number, arr: Arrayish<T>) => U) {
+        const result: U[] = [];
+        for (let i = 0; i < this.length; i++) {
+            result.push(project(this.get(i), i, this))
+        }
+        return result;
+    }
 }
 
 /* App code */
@@ -118,46 +159,55 @@ interface ITodoItem {
 
 interface ITodoList {
     readonly items: Arrayish<ITodoItem>;
+    remove(item: ITodoItem): void;
 }
 
 class TodoItem extends SimpleComponent implements ITodoItem {
-    constructor(name: string, done = false) {
-        super(<li>
-            <span ref="nameSpan">{name}</span>
-            <input hidden ref="nameInput" />
-            <button ref="edit">edit</button>         
-            <button ref="finish">finish</button>
-        </li>);
+    private list: ITodoList;
+
+    constructor(list: ITodoList, name: string, done = false) {
+        super(
+            <li class="todo-item">
+                <span ref="defaultControls">
+                    <span ref="nameSpan" onclick={ ev => !this.done && this.startEdit() }>{name}</span>
+                    <button ref="finish" onclick={ ev => this.finish() }>finish</button>
+                    <button onclick={ ev => this.list.remove(this) }>remove</button>
+                </span>
+                <span hidden ref="editControls">
+                    <input ref="nameInput" />
+                    <button onclick={ ev => this.finishEdit() }>✔</button>
+                    <button onclick={ ev => this.cancelEdit() }>✖</button>
+                </span>
+            </li>);
 
         this.done = done;
+        this.list = list;
+    }
 
-        this.refs.finish.addEventListener("click", ev => this.finish());
-        this.refs.edit.addEventListener("click", ev => this.edit());
+    startEdit() {
+        const nameInput = this.refs.nameInput as HTMLInputElement;
+        nameInput.value = this.refs.nameSpan.innerText ?? '';
+
+        this.refs.defaultControls.hidden = true;
+        this.refs.editControls.hidden = false;
+    }
+
+    finishEdit() {
+        const nameInput = this.refs.nameInput as HTMLInputElement;
+        this.refs.nameSpan.innerText = nameInput.value;
+
+        this.refs.defaultControls.hidden = false;
+        this.refs.editControls.hidden = true;
+    }
+
+    cancelEdit() {
+        this.refs.defaultControls.hidden = false;
+        this.refs.editControls.hidden = true;
     }
 
     finish() {
         this.done = true;
         this.refs.finish.hidden = true;
-    }
-
-    edit() {
-        const nameInput = this.refs.nameInput as HTMLInputElement;
-        if (!this.editing) {
-            nameInput.value = this.refs.nameSpan.innerText ?? '';
-            this.editing = true;
-        }
-        else {
-            this.refs.nameSpan.innerText = nameInput.value;
-            this.editing = false;
-        }
-    }
-
-    get editing() {
-        return this.refs.nameSpan.hidden;
-    }
-    set editing(state: boolean) {
-        this.refs.nameSpan.hidden = state;
-        this.refs.nameInput.hidden = !state;
     }
 
     get name() {
@@ -171,28 +221,60 @@ class TodoItem extends SimpleComponent implements ITodoItem {
         return this.classList.contains("done");
     }
     set done(value: boolean) {
+        this.refs.finish.hidden = value;
         this.classList.toggle("done", value);
     }
 }
 
+function selectAllAndCopy(el: HTMLElement) {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    let selection = getSelection();
+    if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+        document.execCommand("copy")
+    }    
+}
+
 class TodoList extends SimpleComponent implements ITodoList {
-    readonly items: DomArray<TodoItem>;
-
     constructor() {
-        super(<div>
-            <DomArray ref="items" />
-            <input ref="name" />
-            <button ref="add">Add</button>
-        </div>);
+        super(
+            <div>
+                <h1>Todo</h1>
+                <DomArray ref="items" />
+                <div>
+                    <input ref="nameInput" />
+                    <button onclick={ ev => this.add() }>Add</button>
+                </div>
+                <h2>Export</h2>
+                <button onclick={ ev => this.export() }>export</button>
+                <pre ref="outputArea" />
+            </div>);
+    }
+    
+    get items() { return this.refs.items as DomArray<TodoItem>; }
+    get nameInput() { return this.refs.nameInput as HTMLInputElement; }
 
-        this.items = this.refs.items as any;
+    export() {
+        const result = this.items.map(item => ({ 
+            name: item.name, 
+            done: item.done,
+         }));
 
-        this.refs.add.addEventListener("click", ev => {
-            let nameInput = this.refs.name as HTMLInputElement;
-            let item = new TodoItem(nameInput.value);
-            nameInput.value = "";
-            this.items.push(item);
-        });
+         this.refs.outputArea.innerText = JSON.stringify(result, undefined, 4);
+         selectAllAndCopy(this.refs.outputArea as any);
+    }
+
+    remove(item: ITodoItem): void {
+        for (let i = this.items.length - 1; i >= 0; i--) {
+            if (this.items.get(i) === item) this.items.removeAt(i);
+        }
+    }
+
+    add() {
+        this.items.push(new TodoItem(this, this.nameInput.value));
+        this.nameInput.value = "";
     }
 }
 
