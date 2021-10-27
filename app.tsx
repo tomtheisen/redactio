@@ -1,4 +1,5 @@
 /** @jsxImportSource . */
+import { selectAllAndCopy } from './clipboard';
 import { SimpleComponent } from './jsx-runtime';
 import { Arrayish,  DomArray,  } from './simcom';
 
@@ -60,31 +61,11 @@ class TodoItem extends SimpleComponent implements ITodoItem {
         this.refs.finish.hidden = true;
     }
 
-    get name() {
-        return this.refs.nameSpan.innerText;
-    }
-    set name(value: string) {
-        this.refs.nameSpan.innerText = value;
-    }
+    get name() { return this.refs.nameSpan.innerText; }
+    set name(value: string) { this.refs.nameSpan.innerText = value; }
 
-    get done() {
-        return this.classList.contains("done");
-    }
-    set done(value: boolean) {
-        this.refs.finish.hidden = value;
-        this.classList.toggle("done", value);
-    }
-}
-
-function selectAllAndCopy(el: HTMLElement) {
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    let selection = getSelection();
-    if (selection) {
-        selection.removeAllRanges();
-        selection.addRange(range);
-        document.execCommand("copy")
-    }    
+    get done() { return this.classList.contains("done"); }
+    set done(value: boolean) { this.classList.toggle("done", this.refs.finish.hidden = value); }
 }
 
 class TodoList extends SimpleComponent implements ITodoList {
