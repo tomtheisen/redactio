@@ -1,7 +1,7 @@
 /** @jsxImportSource . */
 import { selectAllAndCopy } from './clipboard';
 import { SimpleComponent } from './jsx-runtime';
-import { Arrayish,  DomArray,  } from './simcom';
+import { Arrayish,  DomArray } from './simcom';
 
 interface ITodoItem {
     name: string;
@@ -27,7 +27,7 @@ class TodoItem extends SimpleComponent implements ITodoItem {
                 <span hidden ref="editControls">
                     <input ref="nameInput" />
                     <button onclick={ ev => this.finishEdit() }>✔</button>
-                    <button onclick={ ev => this.cancelEdit() }>✖</button>
+                    <button onclick={ ev => this.showEditControls(false) }>✖</button>
                 </span>
             </li>);
 
@@ -36,24 +36,18 @@ class TodoItem extends SimpleComponent implements ITodoItem {
     }
 
     startEdit() {
-        const nameInput = this.refs.nameInput as HTMLInputElement;
-        nameInput.value = this.refs.nameSpan.innerText ?? '';
-
-        this.refs.defaultControls.hidden = true;
-        this.refs.editControls.hidden = false;
+        this.nameEditing = this.name ?? '';
+        this.showEditControls(true);
     }
 
     finishEdit() {
-        const nameInput = this.refs.nameInput as HTMLInputElement;
-        this.refs.nameSpan.innerText = nameInput.value;
-
-        this.refs.defaultControls.hidden = false;
-        this.refs.editControls.hidden = true;
+        this.name = this.nameEditing;
+        this.showEditControls(false);
     }
 
-    cancelEdit() {
-        this.refs.defaultControls.hidden = false;
-        this.refs.editControls.hidden = true;
+    showEditControls(val: boolean) {
+        this.refs.defaultControls.hidden = val;
+        this.refs.editControls.hidden = !val;
     }
 
     finish() {
@@ -63,6 +57,10 @@ class TodoItem extends SimpleComponent implements ITodoItem {
 
     get name() { return this.refs.nameSpan.innerText; }
     set name(value: string) { this.refs.nameSpan.innerText = value; }
+
+    get nameInput() { return this.refs.nameInput as HTMLInputElement; }
+    get nameEditing() { return this.nameInput.value; }
+    set nameEditing(value: string) { this.nameInput.value = value; }
 
     get done() { return this.classList.contains("done"); }
     set done(value: boolean) { this.classList.toggle("done", this.refs.finish.hidden = value); }
