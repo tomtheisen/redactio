@@ -1,13 +1,11 @@
 export namespace JSX {
     interface StandardElement {
-        ref?: string;
-        class?: string;
+        ref?: string;   // used to assign this element to the component's
+        class?: string; // who needs className?  we also use setAttribute, which takes "class"
     }
 
     export type IntrinsicElements = {
-        [key in keyof HTMLElementTagNameMap]: 
-            Partial<Omit<HTMLElementTagNameMap[key], "children" | "className">> 
-            & StandardElement;
+        [key in keyof HTMLElementTagNameMap]: StandardElement & Partial<HTMLElementTagNameMap[key]>;
     }
 }
 
