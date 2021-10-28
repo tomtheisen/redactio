@@ -1,4 +1,15 @@
-export { JSX } from './jsx-types';
+export namespace JSX {
+    interface StandardElement {
+        ref?: string;
+        class?: string;
+    }
+
+    export type IntrinsicElements = {
+        [key in keyof HTMLElementTagNameMap]: 
+            Partial<Omit<HTMLElementTagNameMap[key], "children" | "className">> 
+            & StandardElement;
+    }
+}
 
 export interface SimpleComponentProps {
     ref?: string;
