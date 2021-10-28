@@ -1,5 +1,13 @@
 export { JSX } from './jsx-types';
 
+export interface SimpleComponentProps {
+    ref?: string;
+    [key: string]: any;
+}
+export type ElementRefs = {[key: string]: HTMLElement | SimpleComponent};
+export type RenderOutput = { element: HTMLElement, refs: ElementRefs };
+export type SimpleComponentConstructor = new (props?: SimpleComponentProps) => SimpleComponent;
+
 export abstract class SimpleComponent {
     readonly element: HTMLElement;
     readonly refs: ElementRefs;
@@ -22,13 +30,10 @@ export abstract class SimpleComponent {
     }
 }
 
-export type ElementRefs = {[key: string]: HTMLElement | SimpleComponent};
-export type RenderOutput = { element: HTMLElement, refs: ElementRefs };
-
-export function jsx(tag: (new () => SimpleComponent) | string, attrs?: {[key: string]: any}): RenderOutput {
+export function jsx(tag: SimpleComponentConstructor | string, attrs?: {[key: string]: any}): RenderOutput {
     let refs = {}, element: HTMLElement, component: SimpleComponent | undefined; 
     if (typeof tag === 'function'){
-        component = new tag();
+        component = new tag(attrs);
         element = component.element;
     }
     else element = document.createElement(tag);

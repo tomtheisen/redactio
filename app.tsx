@@ -1,22 +1,12 @@
 /** @jsxImportSource . */
 import { selectAllAndCopy } from './clipboard';
 import { SimpleComponent } from './jsx-runtime';
-import { Arrayish,  DomArray } from './simcom';
+import { BackedArray } from './simcom';
 
-interface ITodoItem {
-    name: string;
-    done: boolean;
-}
+class TodoItem extends SimpleComponent {
+    private list: TodoList;
 
-interface ITodoList {
-    readonly items: Arrayish<ITodoItem>;
-    remove(item: ITodoItem): void;
-}
-
-class TodoItem extends SimpleComponent implements ITodoItem {
-    private list: ITodoList;
-
-    constructor(list: ITodoList, name: string, done = false) {
+    constructor(list: TodoList, name: string, done = false) {
         super(
             <li class="todo-item">
                 <span ref="defaultControls">
@@ -66,12 +56,12 @@ class TodoItem extends SimpleComponent implements ITodoItem {
     set done(value: boolean) { this.classList.toggle("done", this.refs.finish.hidden = value); }
 }
 
-class TodoList extends SimpleComponent implements ITodoList {
+class TodoList extends SimpleComponent {
     constructor() {
         super(
             <div>
                 <h1>Todo</h1>
-                <DomArray ref="items" />
+                <BackedArray ref="items" tag="ol" />
                 <div>
                     <input ref="nameInput" />
                     <button onclick={ ev => this.add() }>Add</button>
@@ -82,7 +72,7 @@ class TodoList extends SimpleComponent implements ITodoList {
             </div>);
     }
     
-    get items() { return this.refs.items as DomArray<TodoItem>; }
+    get items() { return this.refs.items as BackedArray<TodoItem>; }
     get nameInput() { return this.refs.nameInput as HTMLInputElement; }
 
     export() {
@@ -95,7 +85,7 @@ class TodoList extends SimpleComponent implements ITodoList {
          selectAllAndCopy(this.refs.outputArea as any);
     }
 
-    remove(item: ITodoItem): void {
+    remove(item: TodoItem): void {
         for (let i = this.items.length - 1; i >= 0; i--) {
             if (this.items.get(i) === item) this.items.removeAt(i);
         }
