@@ -13,6 +13,7 @@ export interface SimpleComponentProps {
     ref?: string;
     [key: string]: any;
 }
+
 export type ElementRefs = {[key: string]: HTMLElement | RedactioComponent};
 export type RenderOutput = { element: HTMLElement, refs: ElementRefs };
 export type SimpleComponentConstructor = new (props?: SimpleComponentProps) => RedactioComponent;
@@ -41,10 +42,7 @@ export abstract class RedactioComponent {
 
 export function jsx(tag: SimpleComponentConstructor | string, attrs?: {[key: string]: any}): RenderOutput {
     let refs = {}, element: HTMLElement, component: RedactioComponent | undefined; 
-    if (typeof tag === 'function'){
-        component = new tag(attrs);
-        element = component.element;
-    }
+    if (typeof tag === 'function') element = (component = new tag(attrs)).element;
     else element = document.createElement(tag);
 
     if (attrs?.children) {
@@ -81,20 +79,25 @@ export class BackedArray<T extends RedactioComponent> extends RedactioComponent 
     }
 
     get length() { return this.items.length; }
+
     push(t: T): void {
         this.items.push(t);
         this.element.appendChild(t.element);
     }
+
     removeAt(i: number): T {
         let removed = this.items.splice(i, 1);
         this.element.removeChild(this.element.children[i]);
         return removed[0];
     }
+
     insertAt(i: number, value: T): void {
         this.items.splice(i, 0, value);
         this.element.insertBefore(value.element, this.element.children[i])
     }
+
     get(i: number): T { return this.items[i]; }
+
     set(i: number, value: T): void {
         this.items[i] = value;
         this.element.children[i].replaceWith(value.element);
