@@ -2,15 +2,17 @@
   "name": "redactio",
   "version": "1.0.0",
   "description": "TSX components for mutable long-lived DOM elements",
-  "main": "index.js",
+  "main": "jsx-runtime.ts",
+  "files": [
+    "./jsx-runtime.*"
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tsc && npx esbuild --bundle --outfile=bundle.js ./out/app.js && npx tsc --build --clean"
+    "build": "npx tsc"
   },
   "author": "Tom Theisen",
   "license": "MIT",
   "devDependencies": {
-    "esbuild": "^0.13.9",
     "typescript": "^4.4.4"
   }
 }
