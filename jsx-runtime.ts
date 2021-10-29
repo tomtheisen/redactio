@@ -116,4 +116,6 @@ export class BackedArray<T extends RedactioComponent> extends RedactioComponent 
         }
         return result;
     }
+
+    toArray() { return this.map(e => e); }
 }

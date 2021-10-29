@@ -67,21 +67,22 @@ class TodoList extends RedactioComponent {
                 </div>
                 <h2>Export</h2>
                 <button onclick={ ev => this.export() }>export</button>
+                <label> <input ref="excludeFinished" type="checkbox"/> Exclude finished items </label>
                 <pre ref="outputArea" />
             </div>);
     }
     
     get items() { return this.refs.items as BackedArray<TodoItem>; }
     get nameInput() { return this.refs.nameInput as HTMLInputElement; }
+    get excludeFinishedCheckbox() { return this.refs.excludeFinished as HTMLInputElement; }
 
     export() {
-        const result = this.items.map(item => ({ 
-            name: item.name, 
-            done: item.done,
-         }));
-
-         this.refs.outputArea.innerText = JSON.stringify(result, undefined, 4);
-         selectAllAndCopy(this.refs.outputArea as any);
+        let items = this.excludeFinishedCheckbox.checked
+            ? this.items.filter(item => !item.done)
+            : this.items.toArray();
+        const result = items.map(item => ({ name: item.name, done: item.done }));
+        this.refs.outputArea.innerText = JSON.stringify(result, undefined, 4);
+        selectAllAndCopy(this.refs.outputArea as any);
     }
 
     remove(item: TodoItem): void {
