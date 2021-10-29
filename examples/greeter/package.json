@@ -1,0 +1,15 @@
+{
+  "name": "greeter",
+  "version": "1.0.0",
+  "description": "redactio example",
+  "main": "greeter.tsx",
+  "scripts": {
+    "test": "npx tsc && npx esbuild --bundle --outfile=bundle.js greeter.js && npx tsc --build --clean"
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.13.10",
+    "typescript": "^4.4.4"
+  }
+}

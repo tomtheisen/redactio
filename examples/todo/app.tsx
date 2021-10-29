@@ -1,9 +1,8 @@
-/** @jsxImportSource . */
+/** @jsxImportSource ../.. */
 import { selectAllAndCopy } from './clipboard';
-import { SimpleComponent } from './jsx-runtime';
-import { BackedArray } from './simcom';
+import { RedactioComponent, BackedArray } from '../../jsx-runtime';
 
-class TodoItem extends SimpleComponent {
+class TodoItem extends RedactioComponent {
     private list: TodoList;
 
     constructor(list: TodoList, name: string, done = false) {
@@ -56,7 +55,7 @@ class TodoItem extends SimpleComponent {
     set done(value: boolean) { this.classList.toggle("done", this.refs.finish.hidden = value); }
 }
 
-class TodoList extends SimpleComponent {
+class TodoList extends RedactioComponent {
     constructor() {
         super(
             <div>

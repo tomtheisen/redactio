@@ -1,0 +1,15 @@
+{
+  "name": "todo",
+  "version": "1.0.0",
+  "description": "Redactio todo example",
+  "main": "app.tsx",
+  "scripts": {
+    "build": "npx tsc && npx esbuild --bundle --outfile=bundle.js ./app.js && npx tsc --build --clean"
+  },
+  "author": "Tom Theisen",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.13.9",
+    "typescript": "^4.4.4"
+  }
+}
