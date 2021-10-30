@@ -19,7 +19,7 @@ But if you like to live dangerously, maybe you'll like this little number right 
 <html>
     <head>
         <title>Greeter</title>
-        <script src="bundle.js"><!-- bundler output --></script>
+        <script src="bundle.js"></script> <!-- bundler output -->
     </head>
     <body>
         <div id="root"></div>
