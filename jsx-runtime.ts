@@ -18,6 +18,10 @@ export type ElementRefs = {[key: string]: HTMLElement | RedactioComponent};
 export type RenderOutput = { element: HTMLElement, refs: ElementRefs };
 export type SimpleComponentConstructor = new (props?: SimpleComponentProps) => RedactioComponent;
 
+function isRenderOutput(arg: any): arg is RenderOutput {
+    return arg.element instanceof HTMLElement && typeof arg.refs === "object";
+}
+
 export abstract class RedactioComponent {
     readonly element: HTMLElement;
     readonly refs: ElementRefs;
@@ -46,16 +50,15 @@ export function jsx(tag: SimpleComponentConstructor | string, attrs?: {[key: str
     else element = document.createElement(tag);
 
     if (attrs?.children) {
-        const children: (RenderOutput | HTMLElement | string)[] = attrs?.children ?? [];
+        let children: (RenderOutput | HTMLElement | string)[] = attrs?.children ?? [];
         delete attrs.children;
+        if (!Array.isArray(children)) children = [children];
         for (let child of children) {
-            if (typeof child === "string" || child instanceof HTMLElement) {
-                element.append(child);
-            }
-            else if (typeof child === "object") {
+            if (isRenderOutput(child)) {
                 Object.assign(refs, child.refs);
                 element.append(child.element);
             }
+            else element.append(child);
         }
     }
 

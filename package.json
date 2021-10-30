@@ -4,7 +4,7 @@
   "description": "TSX components for mutable long-lived DOM elements",
   "main": "jsx-runtime.ts",
   "files": [
-    "./jsx-runtime.*"
+    "jsx-runtime.*"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
