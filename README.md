@@ -19,10 +19,10 @@ But if you like to live dangerously, maybe you'll like this little number right 
 <html>
     <head>
         <title>Greeter</title>
-        <script src="bundle.js"></script> <!-- bundler output -->
     </head>
     <body>
         <div id="root"></div>
+        <script src="bundle.js"></script> <!-- bundler output -->
     </body>
 </html>
 ```
@@ -31,7 +31,7 @@ But if you like to live dangerously, maybe you'll like this little number right 
 ```tsx
 /** @jsxImportSource redactio */
 
-import { RedactioComponent } from "./jsx-runtime";
+import { RedactioComponent } from "redactio";
 
 class Greeter extends RedactioComponent {
     constructor() {
@@ -58,6 +58,20 @@ class Greeter extends RedactioComponent {
 
 var app = new Greeter;
 document.getElementById("root")!.append(app.element);
+```
+
+### tsconfig.json
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "jsx": "react",
+    "module": "ES6",
+    "moduleResolution": "node",
+    "strict": true
+  }
+}
 ```
 
 ### Build
