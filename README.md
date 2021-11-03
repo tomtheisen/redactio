@@ -2,7 +2,7 @@
 
 # Redactio
 
-Wanna make a web app?  Wanna use JSX?  Don't want all the react drama? Well, that's what we're doing here.  Honestly though, you'd probably be better off with react.  It's better documented, tested, more widely used, and has (significantly) non-zero usage.
+Wanna make a web app?  Wanna use JSX?  Don't want all the react drama? Well, that's what we're doing here.  Honestly though, you'd probably be better off with react.  It's better documented, tested, and has (significantly) non-zero usage.
 
 But if you like to live dangerously, maybe you'll like this little number right here.
 
