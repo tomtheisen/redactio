@@ -1,10 +1,10 @@
 {
-  "name": "greeter",
+  "name": "syncinputs",
   "version": "1.0.0",
   "description": "redactio example",
-  "main": "greeter.tsx",
+  "main": "syncinputs.tsx",
   "scripts": {
-    "build": "npx tsc && npx esbuild --bundle --outfile=bundle.js greeter.js && npx tsc --build --clean"
+    "build": "npx tsc && npx esbuild --bundle --outfile=bundle.js syncinputs.js && npx tsc --build --clean"
   },
   "author": "",
   "license": "MIT",
