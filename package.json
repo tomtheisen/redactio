@@ -1,6 +1,6 @@
 {
   "name": "redactio",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "TSX components for mutable long-lived DOM elements",
   "main": "jsx-runtime.ts",
   "files": [

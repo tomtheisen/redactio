@@ -65,6 +65,14 @@ export abstract class RedactioComponent {
     querySelectorAll(selectors: string) {
         return this.element.querySelectorAll(selectors);
     }
+
+    focus(options?: FocusOptions) {
+        this.element.focus(options)
+    }
+
+    blur() {
+        this.element.blur();
+    }
 }
 
 export function jsx(tag: SimpleComponentConstructor | string, attrs?: {[key: string]: any}): RenderOutput {
