@@ -31,16 +31,39 @@ export abstract class RedactioComponent {
         this.refs = arg.refs;
     }
 
+    get classList() { return this.element.classList; }
+
+    get id() { return this.element.id; }
+    set id(value: string) { this.element.id = value; }
+
     get hidden() { return this.element.hidden; }
     set hidden(value: boolean) { this.element.hidden = value; }
 
     get innerText() { return this.element.innerText; }
     set innerText(value: string) { this.element.innerText = value; }
 
-    get classList() { return this.element.classList; }
+    get contenteditable() { return this.element.contentEditable; }
+    set contenteditable(value: string) { this.element.contentEditable = value; }
+
+    get spellcheck() { return this.element.spellcheck; }
+    set spellcheck(value: boolean) { this.element.spellcheck = value; }
+
+    get tabIndex() { return this.element.tabIndex; }
+    set tabIndex(value: number) { this.element.tabIndex = value; }
+
+    get title() { return this.element.title; }
+    set title(value: string) { this.element.title = value; }
 
     addEventListener(name: string, handler: (ev: Event) => void) {
         this.element.addEventListener(name, handler);
+    }
+
+    querySelector(selectors: string) {
+        return this.element.querySelector(selectors);
+    }
+
+    querySelectorAll(selectors: string) {
+        return this.element.querySelectorAll(selectors);
     }
 }
 
