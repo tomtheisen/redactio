@@ -1,4 +1,3 @@
-/** @jsxImportSource ../.. */
 import { selectAllAndCopy } from './clipboard';
 import { RedactioComponent, BackedArray } from '../../jsx-runtime';
 

@@ -1,5 +1,3 @@
-/** @jsxImportSource ../.. */
-
 import { RedactioComponent } from "../../jsx-runtime";
 
 class Synchronizer extends RedactioComponent {
@@ -7,12 +5,12 @@ class Synchronizer extends RedactioComponent {
 
     constructor() {
         super(
-            <div>
+            <>
                 <input ref="input1" oninput={ ev => this.synchronize(ev) } />
                 <input ref="input2" oninput={ ev => this.synchronize(ev) } />
                 <input ref="input3" oninput={ ev => this.synchronize(ev) } />
                 <p>But they're always the same!</p>
-            </div>
+            </>
         );
 
         this.inputs = [
@@ -29,4 +27,4 @@ class Synchronizer extends RedactioComponent {
 }
 
 var app = new Synchronizer;
-document.getElementById("root")!.append(app.element);
+document.getElementById("root")!.appendChild(app.root);

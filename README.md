@@ -29,8 +29,6 @@ But if you like to live dangerously, maybe you'll like this little number right 
 
 ### greeter.tsx
 ```tsx
-/** @jsxImportSource redactio */
-
 import { RedactioComponent } from "redactio";
 
 class Greeter extends RedactioComponent {
@@ -57,7 +55,7 @@ class Greeter extends RedactioComponent {
 }
 
 var app = new Greeter;
-document.getElementById("root")!.append(app.element);
+document.getElementById("root")!.append(app.root);
 ```
 
 ### tsconfig.json
@@ -66,7 +64,8 @@ document.getElementById("root")!.append(app.element);
 {
   "compilerOptions": {
     "target": "ES6",
-    "jsx": "react",
+    "jsx": "react-jsx",
+    "jsxImportSource": "redactio",
     "module": "ES6",
     "moduleResolution": "node",
     "strict": true

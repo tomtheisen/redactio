@@ -1,5 +1,3 @@
-/** @jsxImportSource ../.. */
-
 import { RedactioComponent } from "../../jsx-runtime";
 
 class Greeter extends RedactioComponent {

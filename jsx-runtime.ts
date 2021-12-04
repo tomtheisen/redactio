@@ -15,19 +15,25 @@ export interface SimpleComponentProps {
 }
 
 export type ElementRefs = {[key: string]: HTMLElement | RedactioComponent};
-export type RenderOutput = { element: HTMLElement, refs: ElementRefs };
+export type RenderOutput = { root: HTMLElement | DocumentFragment, refs: ElementRefs };
 export type SimpleComponentConstructor = new (props?: SimpleComponentProps) => RedactioComponent;
 
+type Child = RenderOutput | DocumentFragment | HTMLElement | string;
+
 function isRenderOutput(arg: any): arg is RenderOutput {
-    return arg.element instanceof HTMLElement && typeof arg.refs === "object";
+    return typeof arg.root === "object" && typeof arg.refs === "object";
 }
 
 export abstract class RedactioComponent {
+    readonly root : HTMLElement | DocumentFragment;
     readonly element: HTMLElement;
     readonly refs: ElementRefs;
 
     constructor(arg: RenderOutput) {
-        this.element = arg.element;
+        this.root = arg.root;
+        this.element = arg.root instanceof HTMLElement 
+            ? arg.root 
+            : arg.root.querySelector("*") ?? document.createElement("p");
         this.refs = arg.refs;
     }
 
@@ -76,31 +82,54 @@ export abstract class RedactioComponent {
 }
 
 export function jsx(tag: SimpleComponentConstructor | string, attrs?: {[key: string]: any}): RenderOutput {
-    let refs = {}, element: HTMLElement, component: RedactioComponent | undefined; 
-    if (typeof tag === 'function') element = (component = new tag(attrs)).element;
-    else element = document.createElement(tag);
+    let refs = {}, root: HTMLElement | DocumentFragment;
+    let component: RedactioComponent | undefined; 
+    if (typeof tag === 'function') root = (component = new tag(attrs)).root;
+    else root = document.createElement(tag);
 
     if (attrs?.children) {
-        let children: (RenderOutput | HTMLElement | string)[] = attrs?.children ?? [];
+        let children: Child | Child[] = attrs?.children ?? [];
         delete attrs.children;
         if (!Array.isArray(children)) children = [children];
         for (let child of children) {
             if (isRenderOutput(child)) {
                 Object.assign(refs, child.refs);
-                element.append(child.element);
+                root.append(child.root);
             }
-            else element.append(child);
+            else root.append(child);
         }
     }
 
-    for (let attr in attrs) {
-        if (attr === "ref") (refs as any)[attrs[attr]] = component ?? element;
-        else if (attr in element) (element as any)[attr] = attrs[attr];
-        else element.setAttribute(attr, attrs[attr]);
+    if (root instanceof HTMLElement) for (let attr in attrs) {
+        if (attr === "ref") (refs as any)[attrs[attr]] = component ?? root;
+        else if (attr in root) (root as any)[attr] = attrs[attr];
+        else root.setAttribute(attr, attrs[attr]);
     }
-    return { element, refs };
+    return { root, refs };
 }
 export const jsxs = jsx;
+
+export class Fragment extends RedactioComponent {
+    constructor(attrs: { children: Child | Child[] }) {
+        const root = document.createDocumentFragment();
+        let refs = {};
+        let children = Array.isArray(attrs.children) ? attrs.children : [attrs.children];
+        for (let child of children) {
+            if (isRenderOutput(child)) {
+                Object.assign(refs, child.refs);
+                root.appendChild(child.root);
+            }
+            else if (typeof child === "string") {
+                root.appendChild(document.createTextNode(child));
+            }
+            else {
+                root.appendChild(child);
+            }
+        }
+
+        super({ root, refs });
+    }
+}
 
 export class BackedArray<T extends RedactioComponent> extends RedactioComponent {
     private items: T[] = [];
